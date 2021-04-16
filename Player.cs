@@ -11,24 +11,47 @@ namespace DungeonGenerationDemo
 
         Point Coordinates { get; }
 
-        char Display { get; }
+        char Display { get; } // the symbol that will be printed on the board to represent the object
 
         ConsoleColor BackgroundColor { get; set; }
         ConsoleColor ForegroundColor { get; set; }
 
+        /// <summary>
+        /// Draws the object on the board at its coordinates
+        /// </summary>
         void Paint();
 
+        /// <summary>
+        /// Determines whether the provided point intersects with this object
+        /// </summary>
+        /// <param name="x"></param>
+        /// <param name="y"></param>
+        /// <returns></returns>
         bool Collision(Point obstacle);
 
 
     }
+
+    /// <summary>
+    /// Objects that can move and die
+    /// </summary>
     interface ICreature : ITempTile
     {
         int Health { get; set; }
         int Attack { get; set; }
         List<ITempTile> Loot { get; set; }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="destination"></param>
+        /// <returns></returns>
         bool Move(Point destination);
     }
+
+    /// <summary>
+    /// Represents the hero of our story and all that they contain
+    /// </summary>
     class Player : ICreature
     {
         public Point Coordinates { get; }
