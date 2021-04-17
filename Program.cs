@@ -9,9 +9,14 @@ namespace DungeonGenerationDemo
 
         static void Main(string[] args)
         {
+            Console.CursorVisible = false;
+
             Generator gen = new Generator(100, 30);
             gen.Generate(6);
             Dungeon dungeon = gen.GetDungeon();
+
+            dungeon.PlacePlayer(); // TODO: test code
+
             dungeon.PaintAll();
 
             Cardinal newDirection;

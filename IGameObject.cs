@@ -16,7 +16,7 @@ namespace DungeonGenerationDemo
         public int Row { get; }
         //Represents the object's column, y position, or distance from the yop side of the screen
         public int Col { get; }
-        Point Coordinates { get; }
+        Point Coordinates { get; set; }
         //Controls collidability. False if the object can be walked through, like a door or floor,
         //and true if it cannot, like a wall
         public bool Solid { get; }
@@ -27,6 +27,10 @@ namespace DungeonGenerationDemo
         /// </summary>
         public void Paint();
 
+        /// <summary>
+        /// Does what the object does when the player interacts with the space it's on
+        /// </summary>
+        /// <returns>Returns true if the action results in the player being able to move</returns>
         public bool OnCollision();
     }
 }

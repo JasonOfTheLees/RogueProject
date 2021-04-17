@@ -9,7 +9,7 @@ namespace DungeonGenerationDemo
     interface ITempTile
     {
 
-        Point Coordinates { get; }
+        Point Coordinates { get; protected set; }
 
         char Display { get; } // the symbol that will be printed on the board to represent the object
 
@@ -59,7 +59,7 @@ namespace DungeonGenerationDemo
         public int Col { get; }
         public bool Solid { get; }
 
-        public Point Coordinates { get; }
+        public Point Coordinates { get; set; }
         public char Display { get; } = '☺';
         public int Health { get; set; }
         public int Attack { get; set; }
@@ -89,7 +89,8 @@ namespace DungeonGenerationDemo
 
         public bool Move(Point destination)
         {
-            return false;
+            Coordinates = destination;
+            return true;
         }
 
         public bool Collision(int x, int y) 

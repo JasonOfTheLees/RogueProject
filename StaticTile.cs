@@ -12,6 +12,9 @@ namespace DungeonGenerationDemo
         public int Row { get; }
         public int Col { get; }
         public bool Solid { get; }
+
+        public Point Coordinates { get; set; }
+
         private char character;
         private ConsoleColor foreground;
         private ConsoleColor background;
@@ -41,6 +44,8 @@ namespace DungeonGenerationDemo
             this.character = character;
             this.foreground = foreground;
             this.background = background;
+
+            Coordinates = new Point(col, row);
         }
 
         public void Paint()
@@ -49,6 +54,11 @@ namespace DungeonGenerationDemo
             Console.ForegroundColor = foreground;
             Console.BackgroundColor = background;
             Console.Write(character);
+        }
+
+        public bool OnCollision()
+        {
+            return true;
         }
     }
 }

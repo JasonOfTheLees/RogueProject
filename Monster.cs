@@ -13,7 +13,7 @@ namespace DungeonGenerationDemo
         public int Col { get; }
         public bool Solid { get; }
 
-        public Point Coordinates { get; }
+        public Point Coordinates { get; set; }
         public char Display { get; } = 'Ϫ';
         public int Health { get; set; }
         public int Attack { get; set; }

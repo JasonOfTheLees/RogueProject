@@ -91,6 +91,11 @@ namespace DungeonGenerationDemo
 
             return false;
         }
+        public bool IsEmpty(Point point)
+        {
+            return IsEmpty(point.X, point.Y);
+        }
+
 
         /// <summary>
         /// Places a game object inside of the dungeon on the top of whatever tile is chosen.
@@ -120,29 +125,69 @@ namespace DungeonGenerationDemo
             return map;
         }
 
+        /// <summary>
+        /// Move whatever is on the top of the position onto a new position
+        /// </summary>
+        /// <param name="origin"></param>
+        /// <param name="Destination"></param>
+        /// <returns></returns>
         public bool MoveObject(Point origin, Point Destination)
         {
+
+            // If there's time for the chaos of local methods in local delegates
+            //public Action<Point, Point> MoveDelegate() { return MoveObject; }
+            //Action<Point> draw = ConsoleDrawing.Triangle;
+
+            //bool inside(string stuff) { return false; }
+
+            map[Destination.X, Destination.Y].Push(map[Player.Coordinates.X, Player.Coordinates.Y].Pop());
+
+            PaintAt(Player.Coordinates.X, Player.Coordinates.Y);
+
+            Player.Coordinates = Destination;
+
+            PaintAt(Destination.X, Destination.Y);
 
             return false;
         }
 
+        /// <summary>
+        /// Have the player attempt to move, and either interact with what's in the new direction
+        /// or move in the new direction
+        /// </summary>
+        /// <param name="direction"></param>
+        /// <returns></returns>
         public bool MovePlayer(Cardinal direction)
         {
-            Point destination = 
-            if (!map[Destination.X, Destination.Y].Peek().Solid)
+            Point destination = Player.Coordinates + DirectionVectors[(int)direction];
+            if (!IsEmpty(destination) &&
+                !map[destination.X, destination.Y].Peek().Solid &&
+                map[destination.X, destination.Y].Peek().OnCollision()) // if the object gets destroyed/picked up it returns true
             {
-
-                // If there's time for the chaos of local methods in local delegates
-                //Action<Point> draw = ConsoleDrawing.Triangle;
-
-                //bool inside(string stuff) { return false; }
-
-                map[Destination.X, Destination.Y].Push(map[origin.X, origin.Y].Pop());
-
-                PaintAt(origin.X, origin.Y);
-                PaintAt(Destination.X, Destination.Y);
+                MoveObject(Player.Coordinates, destination);
             }
             return false;
+        }
+
+        public void PlacePlayer()
+        {
+
+            // TODO: adding a player to test movement
+            for (int i = 0; i < Width; i++)
+            {
+                for (int j = 0; j < Height; j++)
+                {
+                    if (!IsEmpty(i, j)
+                        //&& map[i,j].Peek().Solid
+                        )
+                    {
+                        Player = new Player(new Point(i, j));
+                        map[i, j].Push(Player);
+                        i = Width; j = Height;
+                    }
+                }
+            }
+
         }
     }
 }
