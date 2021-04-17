@@ -4,6 +4,7 @@ using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using static DungeonGenerationDemo.Constants;
 
 namespace DungeonGenerationDemo
 {
@@ -15,6 +16,8 @@ namespace DungeonGenerationDemo
         private Stack<IGameObject>[,] map { get; }
         public int Width { get; }
         public int Height { get; }
+
+        public Player Player { get; set; }
 
         /// <summary>
         /// Constructs a dungeon with a 2D array of stacks of IGameObjects. Should never really be 
@@ -115,6 +118,31 @@ namespace DungeonGenerationDemo
         public Stack<IGameObject>[,] GetInternalMap()
         {
             return map;
+        }
+
+        public bool MoveObject(Point origin, Point Destination)
+        {
+
+            return false;
+        }
+
+        public bool MovePlayer(Cardinal direction)
+        {
+            Point destination = 
+            if (!map[Destination.X, Destination.Y].Peek().Solid)
+            {
+
+                // If there's time for the chaos of local methods in local delegates
+                //Action<Point> draw = ConsoleDrawing.Triangle;
+
+                //bool inside(string stuff) { return false; }
+
+                map[Destination.X, Destination.Y].Push(map[origin.X, origin.Y].Pop());
+
+                PaintAt(origin.X, origin.Y);
+                PaintAt(Destination.X, Destination.Y);
+            }
+            return false;
         }
     }
 }
