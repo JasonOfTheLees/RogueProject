@@ -7,131 +7,78 @@ using System.Diagnostics;
 
 namespace DungeonGenerationDemo
 {
-    public enum Tile
+    enum Tile
     {
-        EMTPY,
+        EMPTY,
+        FLOOR,
         PATH,
-        ROOM,
-        DOOR,
-        GOLD
+        DOOR
     }
 
     class Generator
     {
+        private Dungeon dungeon;
         private Tile[,] grid;
+        private Random rand;
         private int width;
         private int height;
-        private Random rand;
         private List<Room> rooms;
         private int sets;
 
         public Generator(int width, int height)
         {
+            dungeon = new Dungeon(width, height);
+            grid = new Tile[width, height];
             this.width = width;
             this.height = height;
-            grid = new Tile[width, height];
             rand = new Random();
             rooms = new List<Room>();
+        }
+
+        public Dungeon GetDungeon()
+        {
+            return dungeon;
         }
 
         public void Generate(int count)
         {
             for (int i = 0; i < count; i++)
-            {
                 new Room(this, rand.Next(8, 20), rand.Next(4, 10));
-            }
 
-            rooms[0].Connect(rooms[1]);
+            foreach(Room el in rooms)
+            {
+                Room near = nearest(el);
+                if(near != null)
+                    el.Connect(near);
+            }
         }
 
-        public void Draw()
+        private void place(Tile tile, int x, int y)
         {
-            StringBuilder col = new StringBuilder();
-            for (int i = 0; i < height; i++)
+            grid[x, y] = tile;
+            StaticTile obj;
+            switch(tile)
             {
-                col.Clear();
-                for(int j = 0; j < width; j++)
-                {
-                    char c = '?';
-                    switch(grid[j, i])
-                    {
-                        case Tile.EMTPY:
-                            c = ' ';
-                            break;
-                        case Tile.ROOM:
-                            c = '.';
-                            break;
-                        case Tile.DOOR:
-                            c = '+';
-                            break;
-                        case Tile.PATH:
-                            c = '#';
-                            break;
-                        case Tile.GOLD:
-                            c = 'g';
-                            break;
-                    }
-                    col.Append(c);
-                }
-                Console.SetCursorPosition(0, i);
-                Console.Write(col);
+                case Tile.FLOOR:
+                    obj = StaticTile.Floor(x, y);
+                    break;
+                case Tile.PATH:
+                    obj = StaticTile.Path(x, y);
+                    break;
+                case Tile.DOOR:
+                    obj = StaticTile.Door(x, y);
+                    break;
+                default:
+                    obj = new StaticTile(x, y, false);
+                    break;
             }
+
+            dungeon.PlaceObject(obj, x, y);
         }
 
         private bool pointValid(int x, int y)
         {
             return (0 < x && x < width) && (0 < y && y < height);
-        }
-
-        private void path(Room r1, Room r2)
-        {
-            int x1 = (int)((r1.minX + r1.maxX) * 0.5);
-            int y1 = (int)((r1.minY + r1.maxY) * 0.5);
-            int x2 = (int)((r2.minX + r2.maxX) * 0.5);
-            int y2 = (int)((r2.minY + r2.maxY) * 0.5);
-
-            int xDif = x2 - x1;
-            int yDif = y2 - y1;
-
-            path(x1, y1, xDif, yDif);
-        }
-
-        private void path(int x, int y, int travelX, int travelY)
-        {
-            if (grid[x, y] == Tile.EMTPY)
-                grid[x, y] = Tile.PATH;
-
-
-            List<int> moves = new List<int>();
-
-            if (travelX > 0)
-                moves.Add(0);
-            if (travelX < 0)
-                moves.Add(1);
-            if (travelY > 0)
-                moves.Add(2);
-            if (travelY < 0)
-                moves.Add(3);
-
-            if (moves.Count == 0)
-                return;
-
-            int move = moves[rand.Next(moves.Count)];
-            switch(move)
-            {
-                case 0:
-                    path(x + 1, y, travelX - 1, travelY);
-                    break;
-                case 1:
-                    path(x - 1, y, travelX + 1, travelY);
-                    break;
-                case 2:
-                    path(x, y + 1, travelX, travelY - 1);
-                    break;
-                case 3:
-                    path(x, y - 1, travelX, travelY + 1);
-                    break;
-            }
         }
 
         private Room nearest(Room room)
@@ -141,7 +88,12 @@ namespace DungeonGenerationDemo
 
             foreach(Room el in rooms)
             {
-                
+                int elDist = (int) (Math.Pow(el.centerX - room.centerX, 2) + Math.Pow(el.centerY - room.centerY, 2));
+                if (el != room && !el.connected.Contains(room) && elDist < nearestDist)
+                {
+                    nearestDist = elDist;
+                    nearest = el;
+                }
             }
 
             return nearest;
@@ -158,14 +110,110 @@ namespace DungeonGenerationDemo
             return false;
         }
 
+        private class Path
+        {
+            private Generator gen;
+            private int targetX;
+            private int targetY;
+            private int currentX;
+            private int currentY;
+            private int travelX;
+            private int travelY;
+            private bool active;
+
+            public Path(Generator gen, Room r1, Room r2)
+            {
+                this.gen = gen;
+
+                targetX = r1.centerX;
+                targetY = r1.centerY;
+                currentX = r2.centerX;
+                currentY = r2.centerY;
+
+                travelX = targetX - currentX;
+                travelY = targetY - currentY;
+
+                pathStep();
+            }
+
+            private void pathStep()
+            {
+                List<int> moves = new List<int>();
+
+                if (travelX > 0)
+                    moves.Add(0);
+                if (travelX < 0)
+                    moves.Add(1);
+                if (travelY > 0)
+                    moves.Add(2);
+                if (travelY < 0)
+                    moves.Add(3);
+
+                if (moves.Count == 0)
+                    return;
+
+                int lastX = currentX;
+                int lastY = currentY;
+
+                int move = moves[gen.rand.Next(moves.Count)];
+                switch (move)
+                {
+                    case 0:
+                        currentX++;
+                        travelX--;
+                        break;
+                    case 1:
+                        currentX--;
+                        travelX++;
+                        break;
+                    case 2:
+                        currentY++;
+                        travelY--;
+                        break;
+                    case 3:
+                        currentY--;
+                        travelY++;
+                        break;
+                }
+
+                if (!active)
+                {
+                    if (gen.grid[currentX, currentY] == Tile.EMPTY)
+                    {
+                        active = true;
+                        gen.place(Tile.DOOR, lastX, lastY);
+                    }
+                }
+
+                if (active)
+                {
+                    switch (gen.grid[currentX, currentY])
+                    {
+                        case Tile.EMPTY:
+                            gen.place(Tile.PATH, currentX, currentY);
+                            break;
+                        case Tile.FLOOR:
+                            gen.place(Tile.DOOR, currentX, currentY);
+                            return;
+                        case Tile.PATH:
+                            return;
+                    }
+                }
+
+                pathStep();
+            }
+        }
+
         private class Room
         {
             public int minX;
             public int minY;
             public int maxX;
             public int maxY;
+            public int centerX;
+            public int centerY;
             public int Set;
-            private List<Room> connected;
+            public List<Room> connected;
             private Generator gen;
 
             public Room(Generator gen, int width, int height)
@@ -184,7 +232,10 @@ namespace DungeonGenerationDemo
                     maxY = minY + height;
                 } while (gen.anyCollide(this));
 
-                Place();
+                this.centerX = (int)((minX + maxX) * 0.5);
+                this.centerY = (int)((minY + maxY) * 0.5);
+
+                place();
             }
 
             public bool Collide(Room other)
@@ -233,10 +284,10 @@ namespace DungeonGenerationDemo
 
                 this.connected.Add(other);
                 other.connected.Add(this);
-                gen.path(this, other);
+                new Path(gen, this, other);
             }
 
-            public void Place()
+            private void place()
             {
                 int width = maxX - minX;
                 int height = maxY - minY;
@@ -244,13 +295,8 @@ namespace DungeonGenerationDemo
                 {
                     for (int j = 0; j < height; j++)
                     {
-                        gen.grid[minX + i, minY + j] = Tile.ROOM;
+                        gen.place(Tile.FLOOR, minX + i, minY + j);
                     }
-                }
-
-                for (int i = 0; i < gen.rand.Next(0, 3); i++)
-                {
-                    gen.grid[gen.rand.Next(minX, maxX), gen.rand.Next(minY, maxY)] = Tile.GOLD;
                 }
             }
         }
