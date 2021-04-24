@@ -4,6 +4,7 @@ using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using static DungeonGenerationDemo.Constants;
 
 namespace DungeonGenerationDemo
 {
@@ -15,6 +16,10 @@ namespace DungeonGenerationDemo
         private Stack<IGameObject>[,] map { get; }
         public int Width { get; }
         public int Height { get; }
+        public Point Offset { get; set; }
+        public bool atExit { get; set; }
+
+        public Player Player { get; set; }
 
         /// <summary>
         /// Constructs a dungeon with a 2D array of stacks of IGameObjects. Should never really be 
@@ -38,7 +43,7 @@ namespace DungeonGenerationDemo
             {
                 for(int j = 0; j < map.GetLength(1); j++)
                 {
-                    PaintAt(i, j);
+                    PaintAt(new Point(i, j));
                 }
             }
         }
@@ -48,11 +53,11 @@ namespace DungeonGenerationDemo
         /// </summary>
         /// <param name="row"></param>
         /// <param name="col"></param>
-        public void PaintAt(int row, int col)
+        public void PaintAt(Point p)
         {
-            Stack<IGameObject> current = map[row, col];
+            Stack<IGameObject> current = map[p.Col, p.Row];
 
-            if (!IsEmpty(row, col))
+            if (!IsEmpty(new Point(p.Col, p.Row)))
                 current.Peek().Paint();
         }
 
@@ -62,9 +67,9 @@ namespace DungeonGenerationDemo
         /// <param name="row"></param>
         /// <param name="col"></param>
         /// <returns></returns>
-        public IGameObject GetObject(int row, int col)
+        public IGameObject GetObject(Point p)
         {
-            Stack<IGameObject> current = map[row, col];
+            Stack<IGameObject> current = map[p.Col, p.Row];
             if (current == null)
                 return null;
             if (current.Count == 0)
@@ -78,9 +83,9 @@ namespace DungeonGenerationDemo
         /// <param name="row"></param>
         /// <param name="col"></param>
         /// <returns></returns>
-        public bool IsEmpty(int row, int col)
+        public bool IsEmpty(Point p)
         {
-            Stack<IGameObject> current = map[row, col];
+            Stack<IGameObject> current = map[p.Col, p.Row];
             if (current == null)
                 return true;
             if (current.Count == 0)
@@ -96,13 +101,13 @@ namespace DungeonGenerationDemo
         /// <param name="gameObject"></param>
         /// <param name="row"></param>
         /// <param name="col"></param>
-        public void PlaceObject(IGameObject gameObject, int row, int col)
+        public void PlaceObject(IGameObject gameObject, Point p)
         {
-            Stack<IGameObject> current = map[row, col];
+            Stack<IGameObject> current = map[p.Col, p.Row];
             if (current == null)
             {
-                map[row, col] = new Stack<IGameObject>();
-                current = map[row, col];
+                map[p.Col, p.Row] = new Stack<IGameObject>();
+                current = map[p.Col, p.Row];
             }
 
             current.Push(gameObject);
@@ -115,6 +120,71 @@ namespace DungeonGenerationDemo
         public Stack<IGameObject>[,] GetInternalMap()
         {
             return map;
+        }
+
+        /// <summary>
+        /// Move whatever is on the top of the position onto a new position
+        /// </summary>
+        /// <param name="origin"></param>
+        /// <param name="Destination"></param>
+        /// <returns></returns>
+        public bool MoveObject(Point origin, Point Destination)
+        {
+
+            // If there's time for the chaos of local methods in local delegates
+            //public Action<Point, Point> MoveDelegate() { return MoveObject; }
+            //Action<Point> draw = ConsoleDrawing.Triangle;
+
+            //bool inside(string stuff) { return false; }
+
+            map[Destination.Col, Destination.Row].Push(map[Player.Point.Col, Player.Point.Row].Pop());
+
+            PaintAt(Player.Point);
+
+            Player.Point = Destination;
+
+            PaintAt(Destination);
+
+            return false;
+        }
+
+        /// <summary>
+        /// Have the player attempt to move, and either interact with what's in the new direction
+        /// or move in the new direction
+        /// </summary>
+        /// <param name="direction"></param>
+        /// <returns></returns>
+        public bool MovePlayer(Cardinal direction)
+        {
+            Point destination = Player.Point + DirectionVectors[(int)direction];
+            if (!IsEmpty(destination) &&
+                !map[destination.Col, destination.Row].Peek().Solid &&
+                map[destination.Col, destination.Row].Peek().OnCollision()) // if the object gets destroyed/picked up it returns true
+            {
+                MoveObject(Player.Point, destination);
+            }
+            return false;
+        }
+
+        public void PlacePlayer()
+        {
+
+            // TODO: adding a player to test movement
+            for (int i = 0; i < Width; i++)
+            {
+                for (int j = 0; j < Height; j++)
+                {
+                    if (!IsEmpty(new Point(i, j))
+                        && !map[i,j].Peek().Solid
+                        )
+                    {
+                        Player = new Player(new Point(i, j));
+                        map[i, j].Push(Player);
+                        i = Width; j = Height;
+                    }
+                }
+            }
+
         }
     }
 }

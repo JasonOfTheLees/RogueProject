@@ -12,18 +12,22 @@ namespace DungeonGenerationDemo
     /// </summary>
     interface IGameObject
     {
-        //Represents the object's row, x position, or distance from the left side of the screen
-        public int Row { get; }
-        //Represents the object's column, y position, or distance from the yop side of the screen
-        public int Col { get; }
+        //Represents the object's position on screen
+        public Point Point { get; }
         //Controls collidability. False if the object can be walked through, like a door or floor,
         //and true if it cannot, like a wall
         public bool Solid { get; }
 
         /// <summary>
         /// Uses the console to draw the game object to the screen. This can be implemented
-        /// differently for each game object, but should only affect the object's own row and col
+        /// differently for each game object, but should only affect the object's own point
         /// </summary>
         public void Paint();
+
+        /// <summary>
+        /// Does what the object does when the player interacts with the space it's on
+        /// </summary>
+        /// <returns>Returns true if the action results in the player being able to move</returns>
+        public bool OnCollision();
     }
 }
